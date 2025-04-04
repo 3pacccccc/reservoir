@@ -2,17 +2,17 @@ package com.mag.reservoir.container;
 
 import com.mag.reservoir.boot.ReservoirFactory;
 import com.mag.reservoir.release.AbstractRelease;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationContext;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import org.jctools.queues.MpscUnboundedArrayQueue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
 
 /**
  * @author maruimin
@@ -22,7 +22,7 @@ public class AbstractContainer<T> {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractContainer.class);
 
-    protected Queue<T> queue = new ConcurrentLinkedQueue<>();
+    protected Queue<T> queue = new MpscUnboundedArrayQueue<>(10_000);
     private ApplicationContext applicationContext;
 
     private Class<? extends AbstractRelease<T>> processClass;
@@ -32,6 +32,8 @@ public class AbstractContainer<T> {
     private final Lock lock = new ReentrantLock();
 
     private volatile boolean running = true;
+
+    protected final AtomicBoolean flushInProgress = new AtomicBoolean(false);
 
     public void init(ReservoirFactory<T> factory) {
         this.processClass = factory.getProcessClass();
@@ -56,7 +58,6 @@ public class AbstractContainer<T> {
     }
 
     public void release() {
-        lock.lock();
         try {
             int size = queue.size();
             int count = 0;
@@ -70,7 +71,7 @@ public class AbstractContainer<T> {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            lock.unlock();
+            flushInProgress.set(false);
         }
     }
 

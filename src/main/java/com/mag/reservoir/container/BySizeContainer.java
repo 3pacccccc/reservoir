@@ -10,6 +10,7 @@ public class BySizeContainer<T> extends AbstractContainer<T> implements IContain
 
     private final int maxSize;
 
+
     public BySizeContainer(int maxSize) {
         if (maxSize <= 0) {
             throw new IllegalArgumentException("maxSize must be greater than 0");
@@ -17,16 +18,17 @@ public class BySizeContainer<T> extends AbstractContainer<T> implements IContain
         this.maxSize = maxSize;
     }
 
-    public int getMaxSize() {
-        return maxSize;
-    }
-
 
     @Override
     public void add(T t) {
-        if (queue.size() >= maxSize) {
-            super.release(maxSize);
+        if (!queue.offer(t)) {
+            // todo deal with offer failed
+            return;
         }
+        if (queue.size() > maxSize && flushInProgress.compareAndSet(false, true)) {
+            super.release();
+        }
+
         super.add(t);
     }
 }
