@@ -12,12 +12,16 @@ import java.util.concurrent.TimeUnit;
  */
 public class MixContainer<T> extends AbstractContainer<T> implements IContainer<T> {
 
+    // 达到触发的个数
     private final int maxSize;
 
+    // 达到触发的时间
     private final int maxTime;
 
+    // 出发时间单位
     private final TimeUnit timeUnit;
 
+    // 执行业务释放的线程池
     ScheduledExecutorService scheduledExecutorService;
 
 
