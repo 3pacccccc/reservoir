@@ -27,17 +27,23 @@ public class ReservoirFactory<T> implements ApplicationContextAware, Initializin
 
     private final Class<? extends AbstractRelease<T>> processClass;
 
+    // 用于处理释放攒批后的数据线程池
     private final ExecutorService executors;
 
     public ReservoirFactory(IContainer<T> container, Class<? extends AbstractRelease<T>> processClass) {
         this.container = container;
         this.processClass = processClass;
+        // 根据当前处理器动态获取线程池处理大小
         int cores = Runtime.getRuntime().availableProcessors();
         // 根据CPU核心数动态配置线程池参数
         int corePoolSize = cores * 2;
+        // 最大处理线程大小
         int maximumPoolSize = corePoolSize * 4;
+        // 存活时间
         long keepAliveTime = 60L;
+        // 存活时间单位
         TimeUnit unit = TimeUnit.MINUTES;
+        // 任务队列大小
         int queueCapacity = 1000000;
 
         // 创建阻塞队列
